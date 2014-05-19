@@ -8,6 +8,7 @@
  * @property string $key
  * @property string $value
  * @property integer $version
+ * @property integer $hash
  */
 class MdmData extends CActiveRecord
 {
@@ -27,13 +28,13 @@ class MdmData extends CActiveRecord
 		// NOTE: you should only define rules for those attributes that
 		// will receive user inputs.
 		return array(
-			array('key', 'required'),
-			array('version', 'numerical', 'integerOnly'=>true),
+			array('key, hash', 'required'),
+			array('version, hash', 'numerical', 'integerOnly'=>true),
 			array('key', 'length', 'max'=>128),
 			array('value', 'safe'),
 			// The following rule is used by search().
 			// @todo Please remove those attributes that should not be searched.
-			array('id, key, value, version', 'safe', 'on'=>'search'),
+			array('id, key, value, version, hash', 'safe', 'on'=>'search'),
 		);
 	}
 
@@ -58,6 +59,7 @@ class MdmData extends CActiveRecord
 			'key' => 'Key',
 			'value' => 'Value',
 			'version' => 'Version',
+			'hash' => 'Hash',
 		);
 	}
 
@@ -83,6 +85,7 @@ class MdmData extends CActiveRecord
 		$criteria->compare('key',$this->key,true);
 		$criteria->compare('value',$this->value,true);
 		$criteria->compare('version',$this->version);
+		$criteria->compare('hash',$this->hash);
 
 		return new CActiveDataProvider($this, array(
 			'criteria'=>$criteria,

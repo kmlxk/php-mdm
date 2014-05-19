@@ -10,8 +10,9 @@ class MdmDataService {
         if ($namespace == null) {
             $namespace = self::DEF_NS;
         }
-
-        $key = $namespace . '.' . $key;
+        if (strpos($key, self::DEF_NS) !== 0) {
+            $key = $namespace . '.' . $key;
+        }
         $data = MdmData::model()->find('key=:key', array(':key' => $key));
         return $data;
     }
@@ -20,14 +21,21 @@ class MdmDataService {
         if ($namespace == null) {
             $namespace = self::DEF_NS;
         }
-        $key = $namespace . '.' . $key;
+        if (strpos($key, self::DEF_NS) !== 0) {
+            $key = $namespace . '.' . $key;
+        }
         $data = new MdmData();
         $data->key = $key;
         $data->value = $value;
+        $data->hash = hexdec(hash('adler32', $value));
         $data->save();
     }
 
-    public static function set($namespace, $key, $value, $version) {
+    /**
+     * 通过数据版本和摘要(version+hash)的方式来保证更新的原子性
+     * 更新前先判断client提供的版本和摘要是否和服务器一致。
+     */
+    public static function set($namespace, $key, $value, $version, $hash) {
 
         if ($key == null) {
             throw new Exception('Key cannot be null.');
@@ -38,13 +46,13 @@ class MdmDataService {
             // 不存在则新增
             self::create($namespace, $key, $value);
         } else {
-            if ($version > 0) {
-                if ($version < $data->version) {
-                    // 之前检出的版本过期了，服务器已经更新
-                    throw new Exception("Server data has been changed to Version: {$data->version}, newwer than {$version}");
-                }
+            if ($version != $data->version ||
+                    $hash != $data->hash) {
+                // 之前检出的版本过期了，服务器已经更新
+                throw new Exception("Data Inconsistency. Server Version:{$data->version}({$data->hash}), Client Version:{$version}({$hash})");
             }
             $data->value = $value;
+            $data->hash = hexdec(hash('adler32', $value));
             $data->version++;
             $data->save();
         }

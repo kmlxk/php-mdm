@@ -1,12 +1,13 @@
 <?php
 
-function getJsonData($data, $success = true, $message = '' ) {
+function getJsonData($data, $success = true, $message = '') {
     return array(
         'data' => $data,
         'success' => $success,
         'message' => $message,
     );
 }
+
 function getJsonMessage($success, $message) {
     return array(
         'success' => $success,
@@ -24,8 +25,9 @@ class DataController extends Controller {
         try {
             $namespace = Yii::app()->request->getParam('ns');
             $key = Yii::app()->request->getParam('k');
-            
+
             $data = MdmDataService::get($namespace, $key);
+
             if ($data == null) {
                 $ret = getJsonData($data);
             } else {
@@ -41,14 +43,16 @@ class DataController extends Controller {
 
     public function actionSet() {
         try {
-            
+
             $namespace = Yii::app()->request->getParam('ns');
             $key = Yii::app()->request->getParam('k');
             $value = Yii::app()->request->getParam('v');
+
             $version = intval(Yii::app()->request->getParam('ver'));
-            
-            MdmDataService::set($namespace, $key, $value, $version);
-            
+            $hash = Yii::app()->request->getParam('h');
+
+            MdmDataService::set($namespace, $key, $value, $version, $hash);
+
             $msg = getJsonMessage(true, 'success');
             echo json_encode($msg);
         } catch (Exception $ex) {
